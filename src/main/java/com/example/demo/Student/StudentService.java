@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import jakarta.el.ELException;
+import jakarta.transaction.Transactional;
 
 @Service
 public class StudentService {
@@ -37,5 +38,23 @@ public class StudentService {
             throw new IllegalAccessError("utente con Id: " + studentId + " non presente");
         }
         studentRepository.deleteById(studentId);
+    }
+
+    @Transactional // mi permetterà di effetuare modifiche nel database senza usare QueryS
+    public void updateStudent(Long studentId, String name, String email) {
+        Student student = studentRepository.findById(studentId)
+                .orElseThrow(() -> new IllegalAccessError("studente " + studentId + " non esiste"));
+
+        if (name != null && name.length() > 0 && !student.getName().equals(name)) {
+            student.setName(name);
+        }
+
+        if (email != null && email.length() > 0 && !student.getEmail().equals(email)) {
+            Optional<Student> studentOptional = studentRepository.findStudentByEmail(email);
+            if (studentOptional.isPresent()) {
+                throw new IllegalAccessError("email già in uso");
+            }
+            student.setEmail(email);
+        }
     }
 }
